@@ -33,7 +33,7 @@ import {
   Image as ImageIcon
 } from "lucide-react";
 
-type Restaurant = Awaited<ReturnType<typeof restaurantService.getRestaurantByOwner>>;
+type Restaurant = Awaited<ReturnType<typeof restaurantService.getRestaurantByOwnerId>>;
 type Banner = Awaited<ReturnType<typeof bannerService.getBannersByRestaurant>>[0];
 
 export default function BannerManagement() {
@@ -64,13 +64,13 @@ export default function BannerManagement() {
 
   const loadData = async () => {
     try {
-      const session = await authService.getSession();
+      const session = await authService.getCurrentSession();
       if (!session?.user) {
         router.push("/auth/login");
         return;
       }
 
-      const restaurantData = await restaurantService.getRestaurantByOwner(session.user.id);
+      const restaurantData = await restaurantService.getRestaurantByOwnerId(session.user.id);
       if (restaurantData) {
         setRestaurant(restaurantData);
         loadBanners(restaurantData.id);

@@ -117,7 +117,7 @@ export default function PublicMenu() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-cream to-white p-4">
         <Card className="p-8 text-center max-w-md">
-          <h1 className="text-2xl font-bold text-foreground mb-2">القائمة غير موجودة</h1>
+          <h1 className="text-2xl font-bold text-emerald mb-2">القائمة غير موجودة</h1>
           <p className="text-foreground/70">تأكد من صحة رمز QR أو تواصل مع المطعم</p>
         </Card>
       </div>
@@ -207,6 +207,7 @@ export default function PublicMenu() {
                   loop: true,
                 }}
                 plugins={[
+                  // @ts-expect-error - Embla carousel types mismatch
                   Autoplay({
                     delay: 5000,
                   }),
