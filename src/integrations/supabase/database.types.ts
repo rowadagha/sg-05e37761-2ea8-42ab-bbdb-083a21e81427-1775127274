@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -64,6 +64,7 @@ export type Database = {
       }
       menu_items: {
         Row: {
+          calories: number | null
           category_id: string
           created_at: string | null
           description: string | null
@@ -80,6 +81,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          calories?: number | null
           category_id: string
           created_at?: string | null
           description?: string | null
@@ -96,6 +98,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          calories?: number | null
           category_id?: string
           created_at?: string | null
           description?: string | null
