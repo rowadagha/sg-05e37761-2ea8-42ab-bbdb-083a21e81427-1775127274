@@ -17,7 +17,8 @@ import {
   Download,
   RefreshCw,
   Eye,
-  BarChart
+  BarChart,
+  Image as ImageIcon
 } from "lucide-react";
 
 type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"];
@@ -216,6 +217,14 @@ export default function Dashboard() {
                 >
                   <Menu className="w-4 h-4 ml-2" />
                   إدارة القائمة
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => router.push("/dashboard/banners")}
+                >
+                  <ImageIcon className="w-4 h-4 ml-2" />
+                  البانرات الترويجية
                 </Button>
                 <Button 
                   variant="outline" 
