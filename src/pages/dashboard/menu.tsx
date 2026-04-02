@@ -138,37 +138,52 @@ export default function MenuManagement() {
     try {
       let imageUrl = itemForm.image_url;
 
+      // Handle new image upload
       if (imagePreview && imagePreview.startsWith("data:")) {
         setUploadingImage(true);
         const response = await fetch(imagePreview);
         const blob = await response.blob();
         const file = new File([blob], "menu-item.jpg", { type: "image/jpeg" });
         
+        console.log("Uploading image for restaurant:", restaurant.id);
         const uploadedUrl = await storageService.uploadMenuItemImage(restaurant.id, file);
+        console.log("Upload result:", uploadedUrl);
+        
         if (uploadedUrl) {
           imageUrl = uploadedUrl;
           
+          // Delete old image if editing
           if (editingItem?.image_url) {
             await storageService.deleteMenuItemImage(editingItem.image_url);
           }
+        } else {
+          alert("فشل رفع الصورة. يرجى المحاولة مرة أخرى.");
+          setUploadingImage(false);
+          return;
         }
         setUploadingImage(false);
       }
 
       const itemData = {
-        ...itemForm,
-        restaurant_id: restaurant.id,
+        name: itemForm.name,
+        name_en: itemForm.name_en || null,
+        description: itemForm.description || null,
+        description_en: itemForm.description_en || null,
         price: parseFloat(itemForm.price),
         calories: itemForm.calories ? parseInt(itemForm.calories) : null,
         category_id: itemForm.category_id || null,
-        image_url: imageUrl
+        is_available: itemForm.is_available,
+        image_url: imageUrl || null
       };
+
+      console.log("Saving item with data:", itemData);
 
       if (editingItem) {
         await menuService.updateMenuItem(editingItem.id, itemData);
       } else {
         const maxOrder = Math.max(0, ...items.map(i => i.display_order || 0));
         await menuService.createMenuItem({
+          restaurant_id: restaurant.id,
           ...itemData,
           display_order: maxOrder + 1
         });
@@ -179,6 +194,7 @@ export default function MenuManagement() {
       loadItems();
     } catch (error) {
       console.error("Error saving item:", error);
+      alert("حدث خطأ أثناء حفظ الصنف");
     }
   };
 
