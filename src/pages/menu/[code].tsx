@@ -33,9 +33,6 @@ export default function PublicMenu() {
 
   const loadMenu = async (qrCode: string) => {
     try {
-      // Track view
-      await qrCodeService.trackView(qrCode);
-
       // Get restaurant from QR code
       const { data: qrData } = await supabase
         .from("qr_codes")
@@ -44,10 +41,7 @@ export default function PublicMenu() {
         .eq("is_active", true)
         .single();
 
-      if (!qrData) {
-        setLoading(false);
-        return;
-      }
+      if (!qrData) { setLoading(false); return; } await qrCodeService.trackView(qrCode, qrData.restaurant_id);
 
       // Get restaurant details
       const { data: restaurantData } = await supabase
@@ -76,8 +70,8 @@ export default function PublicMenu() {
 
   const filteredItems = items.filter(item => {
     const matchesSearch = language === "ar" 
-      ? item.name_ar.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.description_ar || "").toLowerCase().includes(searchQuery.toLowerCase())
+      ? item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.description || "").toLowerCase().includes(searchQuery.toLowerCase())
       : (item.name_en || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.description_en || "").toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -179,7 +173,7 @@ export default function PublicMenu() {
                     onClick={() => setSelectedCategory(category.id)}
                     className={selectedCategory === category.id ? "bg-emerald hover:bg-emerald-dark" : ""}
                   >
-                    {language === "ar" ? category.name_ar : category.name_en || category.name_ar}
+                    {language === "ar" ? category.name : category.name_en || category.name}
                   </Button>
                 ))}
               </div>
@@ -206,11 +200,11 @@ export default function PublicMenu() {
                 return (
                   <div key={category.id}>
                     <h2 className="text-2xl font-bold text-foreground mb-4">
-                      {language === "ar" ? category.name_ar : category.name_en || category.name_ar}
+                      {language === "ar" ? category.name : category.name_en || category.name}
                     </h2>
-                    {(language === "ar" ? category.description_ar : category.description_en) && (
+                    {(language === "ar" ? category.description : category.description_en) && (
                       <p className="text-foreground/70 mb-4">
-                        {language === "ar" ? category.description_ar : category.description_en}
+                        {language === "ar" ? category.description : category.description_en}
                       </p>
                     )}
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -220,18 +214,18 @@ export default function PublicMenu() {
                             <div className="aspect-video bg-secondary relative">
                               <img 
                                 src={item.image_url} 
-                                alt={language === "ar" ? item.name_ar : item.name_en || item.name_ar}
+                                alt={language === "ar" ? item.name : item.name_en || item.name}
                                 className="w-full h-full object-cover"
                               />
                             </div>
                           )}
                           <div className="p-4">
                             <h3 className="text-lg font-bold text-foreground mb-1">
-                              {language === "ar" ? item.name_ar : item.name_en || item.name_ar}
+                              {language === "ar" ? item.name : item.name_en || item.name}
                             </h3>
-                            {(language === "ar" ? item.description_ar : item.description_en) && (
+                            {(language === "ar" ? item.description : item.description_en) && (
                               <p className="text-sm text-foreground/70 mb-3">
-                                {language === "ar" ? item.description_ar : item.description_en}
+                                {language === "ar" ? item.description : item.description_en}
                               </p>
                             )}
                             <div className="flex items-center justify-between">
@@ -264,18 +258,18 @@ export default function PublicMenu() {
                             <div className="aspect-video bg-secondary relative">
                               <img 
                                 src={item.image_url} 
-                                alt={language === "ar" ? item.name_ar : item.name_en || item.name_ar}
+                                alt={language === "ar" ? item.name : item.name_en || item.name}
                                 className="w-full h-full object-cover"
                               />
                             </div>
                           )}
                           <div className="p-4">
                             <h3 className="text-lg font-bold text-foreground mb-1">
-                              {language === "ar" ? item.name_ar : item.name_en || item.name_ar}
+                              {language === "ar" ? item.name : item.name_en || item.name}
                             </h3>
-                            {(language === "ar" ? item.description_ar : item.description_en) && (
+                            {(language === "ar" ? item.description : item.description_en) && (
                               <p className="text-sm text-foreground/70 mb-3">
-                                {language === "ar" ? item.description_ar : item.description_en}
+                                {language === "ar" ? item.description : item.description_en}
                               </p>
                             )}
                             <div className="flex items-center justify-between">

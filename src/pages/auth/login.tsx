@@ -1,4 +1,4 @@
-<![CDATA[import { useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -112,4 +112,4 @@ export default function Login() {
     </>
   );
 }
-</![CDATA[>
+

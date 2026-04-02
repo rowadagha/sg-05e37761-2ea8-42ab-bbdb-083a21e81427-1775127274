@@ -34,7 +34,7 @@ export default function Settings() {
 
   const loadData = async () => {
     try {
-      const session = await authService.getSession();
+      const session = await authService.getCurrentSession();
       if (!session?.user) {
         router.replace("/auth/login");
         return;

@@ -12,7 +12,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const session = await authService.getSession();
+      const session = await authService.getCurrentSession();
       
       if (!session) {
         router.replace("/auth/login");

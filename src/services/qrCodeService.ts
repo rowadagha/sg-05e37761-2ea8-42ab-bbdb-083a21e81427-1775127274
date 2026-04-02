@@ -1,4 +1,4 @@
-<![CDATA[import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 type QRCode = Database["public"]["Tables"]["qr_codes"]["Row"];
@@ -20,7 +20,7 @@ export const qrCodeService = {
       .insert({
         restaurant_id: restaurantId,
         code,
-        qr_data: `${window.location.origin}/menu/${code}`
+        url: `${window.location.origin}/menu/${code}`
       })
       .select()
       .single();
@@ -45,7 +45,7 @@ export const qrCodeService = {
       .insert({
         restaurant_id: restaurantId,
         code,
-        qr_data: `${window.location.origin}/menu/${code}`
+        url: `${window.location.origin}/menu/${code}`
       })
       .select()
       .single();
@@ -58,16 +58,7 @@ export const qrCodeService = {
     return data;
   },
 
-  async trackView(code: string): Promise<void> {
-    await supabase
-      .from("menu_views")
-      .insert({
-        qr_code: code,
-        viewed_at: new Date().toISOString()
-      });
-
-    await supabase.rpc("increment_qr_scan_count", { qr_code_id: code });
-  },
+  async trackView(code: string, restaurantId: string): Promise<void> { await supabase.from("menu_views").insert({ restaurant_id: restaurantId }); },
 
   generateCode(): string {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -78,4 +69,4 @@ export const qrCodeService = {
     return code;
   }
 };
-</![CDATA[>
+

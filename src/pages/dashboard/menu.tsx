@@ -42,16 +42,16 @@ export default function MenuManagement() {
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
 
   const [categoryForm, setCategoryForm] = useState({
-    name_ar: "",
+    name: "",
     name_en: "",
-    description_ar: "",
+    description: "",
     description_en: ""
   });
 
   const [itemForm, setItemForm] = useState({
-    name_ar: "",
+    name: "",
     name_en: "",
-    description_ar: "",
+    description: "",
     description_en: "",
     price: "",
     image_url: "",
@@ -71,7 +71,7 @@ export default function MenuManagement() {
 
   const loadData = async () => {
     try {
-      const session = await authService.getSession();
+      const session = await authService.getCurrentSession();
       if (!session?.user) {
         router.replace("/auth/login");
         return;
@@ -169,15 +169,15 @@ export default function MenuManagement() {
   };
 
   const resetCategoryForm = () => {
-    setCategoryForm({ name_ar: "", name_en: "", description_ar: "", description_en: "" });
+    setCategoryForm({ name: "", name_en: "", description: "", description_en: "" });
     setEditingCategory(null);
   };
 
   const resetItemForm = () => {
     setItemForm({
-      name_ar: "",
+      name: "",
       name_en: "",
-      description_ar: "",
+      description: "",
       description_en: "",
       price: "",
       image_url: "",
@@ -190,9 +190,9 @@ export default function MenuManagement() {
   const openEditCategory = (category: MenuCategory) => {
     setEditingCategory(category);
     setCategoryForm({
-      name_ar: category.name_ar,
+      name: category.name,
       name_en: category.name_en || "",
-      description_ar: category.description_ar || "",
+      description: category.description || "",
       description_en: category.description_en || ""
     });
     setShowCategoryDialog(true);
@@ -201,9 +201,9 @@ export default function MenuManagement() {
   const openEditItem = (item: MenuItem) => {
     setEditingItem(item);
     setItemForm({
-      name_ar: item.name_ar,
+      name: item.name,
       name_en: item.name_en || "",
-      description_ar: item.description_ar || "",
+      description: item.description || "",
       description_en: item.description_en || "",
       price: item.price.toString(),
       image_url: item.image_url || "",
@@ -280,8 +280,8 @@ export default function MenuManagement() {
                         <div>
                           <Label>الاسم بالعربي</Label>
                           <Input
-                            value={categoryForm.name_ar}
-                            onChange={(e) => setCategoryForm({ ...categoryForm, name_ar: e.target.value })}
+                            value={categoryForm.name}
+                            onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
                             placeholder="المقبلات"
                             className="text-right"
                           />
@@ -298,8 +298,8 @@ export default function MenuManagement() {
                         <div>
                           <Label>الوصف بالعربي</Label>
                           <Textarea
-                            value={categoryForm.description_ar}
-                            onChange={(e) => setCategoryForm({ ...categoryForm, description_ar: e.target.value })}
+                            value={categoryForm.description}
+                            onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
                             placeholder="وصف الفئة..."
                             className="text-right"
                           />
@@ -347,7 +347,7 @@ export default function MenuManagement() {
                             : "hover:bg-secondary"
                         }`}
                       >
-                        {category.name_ar}
+                        {category.name}
                       </button>
                       <div className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                         <Button
@@ -378,7 +378,7 @@ export default function MenuManagement() {
               <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold text-foreground">
                   {selectedCategory 
-                    ? categories.find(c => c.id === selectedCategory)?.name_ar 
+                    ? categories.find(c => c.id === selectedCategory)?.name 
                     : "جميع الأصناف"}
                 </h1>
                 <Dialog open={showItemDialog} onOpenChange={(open) => {
@@ -400,8 +400,8 @@ export default function MenuManagement() {
                         <div>
                           <Label>الاسم بالعربي *</Label>
                           <Input
-                            value={itemForm.name_ar}
-                            onChange={(e) => setItemForm({ ...itemForm, name_ar: e.target.value })}
+                            value={itemForm.name}
+                            onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
                             placeholder="كبسة لحم"
                             className="text-right"
                           />
@@ -441,7 +441,7 @@ export default function MenuManagement() {
                             <SelectContent>
                               {categories.map((category) => (
                                 <SelectItem key={category.id} value={category.id}>
-                                  {category.name_ar}
+                                  {category.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -452,8 +452,8 @@ export default function MenuManagement() {
                       <div>
                         <Label>الوصف بالعربي</Label>
                         <Textarea
-                          value={itemForm.description_ar}
-                          onChange={(e) => setItemForm({ ...itemForm, description_ar: e.target.value })}
+                          value={itemForm.description}
+                          onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
                           placeholder="وصف تفصيلي للصنف..."
                           className="text-right"
                           rows={3}
@@ -513,7 +513,7 @@ export default function MenuManagement() {
                         <div className="aspect-video bg-secondary relative">
                           <img 
                             src={item.image_url} 
-                            alt={item.name_ar}
+                            alt={item.name}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -521,7 +521,7 @@ export default function MenuManagement() {
                       <div className="p-4">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
-                            <h3 className="font-bold text-foreground">{item.name_ar}</h3>
+                            <h3 className="font-bold text-foreground">{item.name}</h3>
                             {item.name_en && (
                               <p className="text-sm text-foreground/60" dir="ltr">{item.name_en}</p>
                             )}
@@ -557,8 +557,8 @@ export default function MenuManagement() {
                             </Button>
                           </div>
                         </div>
-                        {item.description_ar && (
-                          <p className="text-sm text-foreground/70 mb-3 line-clamp-2">{item.description_ar}</p>
+                        {item.description && (
+                          <p className="text-sm text-foreground/70 mb-3 line-clamp-2">{item.description}</p>
                         )}
                         <div className="flex items-center justify-between">
                           <span className="text-lg font-bold text-emerald">{item.price} ر.س</span>

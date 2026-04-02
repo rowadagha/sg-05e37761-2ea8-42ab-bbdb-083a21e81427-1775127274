@@ -1,4 +1,4 @@
-<![CDATA[import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 type MenuCategory = Database["public"]["Tables"]["menu_categories"]["Row"];
@@ -140,4 +140,4 @@ export const menuService = {
     return this.updateMenuItem(id, { is_available: isAvailable });
   }
 };
-</![CDATA[>
+

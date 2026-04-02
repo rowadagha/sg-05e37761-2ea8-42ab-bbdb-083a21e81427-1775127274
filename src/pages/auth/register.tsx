@@ -1,4 +1,4 @@
-<![CDATA[import { useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -41,11 +41,7 @@ export default function Register() {
       await restaurantService.createRestaurant({
         name: formData.restaurantName,
         slug,
-        owner_id: user.id,
-        settings: {
-          primary_language: "ar",
-          currency: "SAR"
-        }
+        owner_id: user.id
       });
 
       router.push("/dashboard");
@@ -165,4 +161,4 @@ export default function Register() {
     </>
   );
 }
-</![CDATA[>
+

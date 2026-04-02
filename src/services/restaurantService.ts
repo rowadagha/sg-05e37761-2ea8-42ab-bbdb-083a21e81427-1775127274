@@ -1,4 +1,4 @@
-<![CDATA[import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"];
@@ -93,4 +93,4 @@ export const restaurantService = {
     return slug;
   }
 };
-</![CDATA[>
+

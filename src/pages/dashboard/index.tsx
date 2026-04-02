@@ -35,7 +35,7 @@ export default function Dashboard() {
 
   const loadDashboard = async () => {
     try {
-      const session = await authService.getSession();
+      const session = await authService.getCurrentSession();
       if (!session?.user) {
         router.replace("/auth/login");
         return;
@@ -196,7 +196,7 @@ export default function Dashboard() {
               <div className="space-y-3">
                 <div>
                   <p className="text-sm text-foreground/60">المشاهدات</p>
-                  <p className="text-2xl font-bold text-foreground">{qrCode?.scan_count || 0}</p>
+                  <p className="text-2xl font-bold text-foreground">0</p>
                 </div>
                 <div>
                   <p className="text-sm text-foreground/60">الأصناف النشطة</p>
