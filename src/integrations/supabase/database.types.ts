@@ -1,4 +1,4 @@
- 
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 export type Json =
   | string
   | number
@@ -419,6 +419,7 @@ export type Database = {
           owner_id: string
           phone: string | null
           slug: string
+          theme: string | null
           updated_at: string | null
         }
         Insert: {
@@ -436,6 +437,7 @@ export type Database = {
           owner_id: string
           phone?: string | null
           slug: string
+          theme?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -453,6 +455,7 @@ export type Database = {
           owner_id?: string
           phone?: string | null
           slug?: string
+          theme?: string | null
           updated_at?: string | null
         }
         Relationships: [
