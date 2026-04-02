@@ -27,6 +27,7 @@ export default function Register() {
     setLoading(true);
 
     try {
+      // Step 1: Sign up the user
       const { user } = await authService.signUp(
         formData.email,
         formData.password
@@ -36,6 +37,10 @@ export default function Register() {
         throw new Error("فشل إنشاء الحساب");
       }
 
+      // Step 2: Wait a moment for the profile trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Step 3: Generate unique slug and create restaurant
       const slug = await restaurantService.generateUniqueSlug(formData.restaurantName);
 
       await restaurantService.createRestaurant({
@@ -44,8 +49,10 @@ export default function Register() {
         owner_id: user.id
       });
 
+      // Success - redirect to dashboard
       router.push("/dashboard");
     } catch (err: any) {
+      console.error("Registration error:", err);
       setError(err.message || "حدث خطأ أثناء التسجيل");
     } finally {
       setLoading(false);
