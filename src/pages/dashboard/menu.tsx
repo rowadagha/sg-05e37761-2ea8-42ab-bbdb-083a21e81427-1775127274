@@ -12,6 +12,7 @@ import { SEO } from "@/components/SEO";
 import { authService } from "@/services/authService";
 import { restaurantService } from "@/services/restaurantService";
 import { menuService } from "@/services/menuService";
+import { storageService } from "@/services/storageService";
 import type { Database } from "@/integrations/supabase/types";
 import { 
   QrCode, 
@@ -21,7 +22,9 @@ import {
   ArrowLeft,
   GripVertical,
   Eye,
-  EyeOff
+  EyeOff,
+  Upload,
+  X
 } from "lucide-react";
 import Link from "next/link";
 
@@ -40,6 +43,8 @@ export default function MenuManagement() {
   const [showItemDialog, setShowItemDialog] = useState(false);
   const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(null);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   const [categoryForm, setCategoryForm] = useState({
     name: "",
@@ -126,11 +131,31 @@ export default function MenuManagement() {
     if (!restaurant) return;
 
     try {
+      let imageUrl = itemForm.image_url;
+
+      if (imagePreview && imagePreview.startsWith("data:")) {
+        setUploadingImage(true);
+        const response = await fetch(imagePreview);
+        const blob = await response.blob();
+        const file = new File([blob], "menu-item.jpg", { type: "image/jpeg" });
+        
+        const uploadedUrl = await storageService.uploadMenuItemImage(restaurant.id, file);
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+          
+          if (editingItem?.image_url) {
+            await storageService.deleteMenuItemImage(editingItem.image_url);
+          }
+        }
+        setUploadingImage(false);
+      }
+
       const itemData = {
         ...itemForm,
         restaurant_id: restaurant.id,
         price: parseFloat(itemForm.price),
-        category_id: itemForm.category_id || null
+        category_id: itemForm.category_id || null,
+        image_url: imageUrl
       };
 
       if (editingItem) {
@@ -185,6 +210,7 @@ export default function MenuManagement() {
       is_available: true
     });
     setEditingItem(null);
+    setImagePreview("");
   };
 
   const openEditCategory = (category: MenuCategory) => {
@@ -210,7 +236,29 @@ export default function MenuManagement() {
       category_id: item.category_id || "",
       is_available: item.is_available
     });
+    setImagePreview(item.image_url || "");
     setShowItemDialog(true);
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("يرجى اختيار صورة");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("حجم الصورة يجب أن يكون أقل من 5 ميجابايت");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   if (loading) {
@@ -472,18 +520,51 @@ export default function MenuManagement() {
                       </div>
 
                       <div>
-                        <Label>رابط الصورة (اختياري)</Label>
-                        <Input
-                          value={itemForm.image_url}
-                          onChange={(e) => setItemForm({ ...itemForm, image_url: e.target.value })}
-                          placeholder="https://example.com/image.jpg"
-                          dir="ltr"
-                        />
+                        <Label>صورة الصنف</Label>
+                        <div className="space-y-3">
+                          {imagePreview ? (
+                            <div className="relative aspect-video bg-secondary rounded-lg overflow-hidden border-2 border-border">
+                              <img 
+                                src={imagePreview} 
+                                alt="Preview"
+                                className="w-full h-full object-cover"
+                              />
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="destructive"
+                                className="absolute top-2 right-2"
+                                onClick={() => {
+                                  setImagePreview("");
+                                  setItemForm({ ...itemForm, image_url: "" });
+                                }}
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <label className="flex flex-col items-center justify-center aspect-video bg-secondary rounded-lg border-2 border-dashed border-border hover:border-emerald cursor-pointer transition-colors">
+                              <Upload className="w-8 h-8 text-foreground/40 mb-2" />
+                              <span className="text-sm text-foreground/60 mb-1">اضغط لاختيار صورة</span>
+                              <span className="text-xs text-foreground/40">PNG, JPG (حد أقصى 5 ميجابايت)</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageSelect}
+                                className="hidden"
+                              />
+                            </label>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex gap-2">
-                        <Button onClick={handleSaveItem} className="flex-1 bg-emerald hover:bg-emerald-dark">
-                          حفظ الصنف
+                        <Button 
+                          onClick={handleSaveItem} 
+                          className="flex-1 bg-emerald hover:bg-emerald-dark"
+                          disabled={uploadingImage}
+                        >
+                          {uploadingImage ? "جاري الرفع..." : "حفظ الصنف"}
                         </Button>
                         <Button variant="outline" onClick={() => setShowItemDialog(false)} className="flex-1">
                           إلغاء
