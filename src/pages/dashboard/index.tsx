@@ -3,14 +3,15 @@ import { useRouter } from "next/router";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { SEO } from "@/components/SEO";
 import { authService } from "@/services/authService";
 import { restaurantService } from "@/services/restaurantService";
 import { qrCodeService } from "@/services/qrCodeService";
+import { orderService, type OrderWithItems, type OrderStats } from "@/services/orderService";
 import type { Database } from "@/integrations/supabase/types";
 import { 
   QrCode, 
-  LayoutDashboard, 
   Menu,
   Settings,
   LogOut,
@@ -18,7 +19,12 @@ import {
   RefreshCw,
   Eye,
   BarChart,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ShoppingBag,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  DollarSign
 } from "lucide-react";
 
 type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"];
@@ -29,6 +35,13 @@ export default function Dashboard() {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [qrCode, setQRCode] = useState<QRCodeData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<OrderStats>({
+    todayOrders: 0,
+    todayRevenue: 0,
+    activeOrders: 0,
+    completedToday: 0
+  });
+  const [recentOrders, setRecentOrders] = useState<OrderWithItems[]>([]);
 
   useEffect(() => {
     loadDashboard();
@@ -53,6 +66,12 @@ export default function Dashboard() {
 
       const qrData = await qrCodeService.getOrCreateQRCode(restaurantData.id);
       setQRCode(qrData);
+
+      const statsData = await orderService.getOrderStats(restaurantData.id);
+      setStats(statsData);
+
+      const orders = await orderService.getRecentOrders(restaurantData.id, 5);
+      setRecentOrders(orders);
     } catch (error) {
       console.error("Error loading dashboard:", error);
     } finally {
@@ -127,14 +146,112 @@ export default function Dashboard() {
             </p>
           </div>
 
+          {/* Stats Overview */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                  <ShoppingBag className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-foreground/60">طلبات اليوم</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.todayOrders}</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald/10 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-emerald" />
+                </div>
+                <div>
+                  <p className="text-xs text-foreground/60">الإيرادات</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.todayRevenue.toFixed(2)}</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gold/10 rounded-lg flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-gold" />
+                </div>
+                <div>
+                  <p className="text-xs text-foreground/60">طلبات نشطة</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.activeOrders}</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-xs text-foreground/60">مكتملة</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.completedToday}</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {/* Recent Orders */}
+            <Card className="p-6 md:col-span-2">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                    <ShoppingBag className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h2 className="text-lg font-bold text-foreground">آخر الطلبات</h2>
+                </div>
+                <Button variant="outline" size="sm">
+                  عرض الكل
+                </Button>
+              </div>
+
+              {recentOrders.length === 0 ? (
+                <div className="text-center py-8">
+                  <ShoppingBag className="w-12 h-12 text-foreground/20 mx-auto mb-3" />
+                  <p className="text-foreground/60">لا توجد طلبات بعد</p>
+                  <p className="text-sm text-foreground/40 mt-1">ستظهر الطلبات هنا عندما يبدأ العملاء بالطلب</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentOrders.map((order) => (
+                    <div 
+                      key={order.id} 
+                      className="flex items-center justify-between p-4 bg-background/50 rounded-lg border border-border/50 hover:border-emerald/30 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-foreground">{order.order_number}</span>
+                          <Badge variant="outline" className={orderService.getOrderStatusColor(order.status)}>
+                            {orderService.getOrderStatusLabel(order.status)}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-foreground/60">
+                          {order.order_items.length} صنف • {new Date(order.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                      <div className="text-left">
+                        <p className="font-bold text-emerald">{order.total_amount?.toFixed(2)} ر.س</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
             {/* QR Code Card */}
             <Card className="p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-emerald/10 rounded-lg flex items-center justify-center">
                   <QrCode className="w-5 h-5 text-emerald" />
                 </div>
-                <h2 className="text-lg font-bold text-foreground">رمز QR الخاص بك</h2>
+                <h2 className="text-lg font-bold text-foreground">رمز QR</h2>
               </div>
               
               {qrCode && (
@@ -184,28 +301,9 @@ export default function Dashboard() {
                 </div>
               )}
             </Card>
+          </div>
 
-            {/* Stats Cards */}
-            <Card className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-gold/10 rounded-lg flex items-center justify-center">
-                  <BarChart className="w-5 h-5 text-gold" />
-                </div>
-                <h2 className="text-lg font-bold text-foreground">إحصائيات اليوم</h2>
-              </div>
-              
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm text-foreground/60">المشاهدات</p>
-                  <p className="text-2xl font-bold text-foreground">0</p>
-                </div>
-                <div>
-                  <p className="text-sm text-foreground/60">الأصناف النشطة</p>
-                  <p className="text-2xl font-bold text-foreground">0</p>
-                </div>
-              </div>
-            </Card>
-
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
             {/* Quick Actions */}
             <Card className="p-6">
               <h2 className="text-lg font-bold text-foreground mb-4">إجراءات سريعة</h2>
@@ -234,6 +332,35 @@ export default function Dashboard() {
                   <Settings className="w-4 h-4 ml-2" />
                   الإعدادات
                 </Button>
+              </div>
+            </Card>
+
+            {/* Performance Insights */}
+            <Card className="p-6 bg-gradient-to-br from-emerald/5 to-gold/5 border-emerald/20">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-emerald/20 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-emerald" />
+                </div>
+                <h2 className="text-lg font-bold text-foreground">رؤى الأداء</h2>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-white/50 rounded-lg">
+                  <span className="text-sm text-foreground/70">متوسط قيمة الطلب</span>
+                  <span className="font-bold text-emerald">
+                    {stats.todayOrders > 0 ? (stats.todayRevenue / stats.todayOrders).toFixed(2) : "0.00"} ر.س
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-white/50 rounded-lg">
+                  <span className="text-sm text-foreground/70">معدل الإنجاز</span>
+                  <span className="font-bold text-emerald">
+                    {stats.todayOrders > 0 ? ((stats.completedToday / stats.todayOrders) * 100).toFixed(0) : "0"}%
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-white/50 rounded-lg">
+                  <span className="text-sm text-foreground/70">الطلبات النشطة</span>
+                  <span className="font-bold text-gold">{stats.activeOrders}</span>
+                </div>
               </div>
             </Card>
           </div>
