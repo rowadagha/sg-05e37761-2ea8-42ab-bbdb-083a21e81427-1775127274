@@ -59,11 +59,16 @@ export const storageService = {
     file: File
   ): Promise<string | null> {
     try {
+      console.log("Starting upload for restaurant:", restaurantId);
+      console.log("File details:", { name: file.name, size: file.size, type: file.type });
+      
       const fileExt = file.name.split(".").pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `${restaurantId}/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
+      console.log("Upload path:", filePath);
+
+      const { data, error: uploadError } = await supabase.storage
         .from("menu-images")
         .upload(filePath, file, {
           cacheControl: "3600",
@@ -72,16 +77,21 @@ export const storageService = {
 
       if (uploadError) {
         console.error("Upload error:", uploadError);
+        alert(`خطأ في الرفع: ${uploadError.message}`);
         return null;
       }
+
+      console.log("Upload successful, data:", data);
 
       const { data: { publicUrl } } = supabase.storage
         .from("menu-images")
         .getPublicUrl(filePath);
 
+      console.log("Public URL generated:", publicUrl);
       return publicUrl;
     } catch (error) {
       console.error("Error uploading image:", error);
+      alert(`حدث خطأ: ${error instanceof Error ? error.message : "خطأ غير معروف"}`);
       return null;
     }
   },
