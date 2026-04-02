@@ -12,6 +12,7 @@ import {
   Globe,
   ArrowLeft
 } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -46,12 +47,16 @@ export default function Home() {
               </nav>
               
               <div className="flex items-center gap-3">
-                <Button variant="ghost" size="sm">
-                  تسجيل الدخول
-                </Button>
-                <Button size="sm" className="bg-emerald hover:bg-emerald-dark">
-                  ابدأ مجاناً
-                </Button>
+                <Link href="/auth/login">
+                  <Button variant="ghost" size="sm">
+                    تسجيل الدخول
+                  </Button>
+                </Link>
+                <Link href="/auth/register">
+                  <Button size="sm" className="bg-emerald hover:bg-emerald-dark">
+                    ابدأ مجاناً
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -77,10 +82,12 @@ export default function Home() {
               </p>
               
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-                <Button size="lg" className="bg-emerald hover:bg-emerald-dark text-white px-8 h-12">
-                  ابدأ تجربتك المجانية
-                  <ArrowLeft className="w-5 h-5 mr-2" />
-                </Button>
+                <Link href="/auth/register">
+                  <Button size="lg" className="bg-emerald hover:bg-emerald-dark text-white px-8 h-12">
+                    ابدأ تجربتك المجانية
+                    <ArrowLeft className="w-5 h-5 mr-2" />
+                  </Button>
+                </Link>
                 <Button size="lg" variant="outline" className="px-8 h-12">
                   شاهد العرض التوضيحي
                 </Button>
@@ -190,10 +197,12 @@ export default function Home() {
               <p className="text-lg text-white/90 mb-8">
                 انضم إلى مئات المطاعم السعودية التي اختارت منيو بلس لتحسين تجربة عملائها
               </p>
-              <Button size="lg" className="bg-white text-emerald hover:bg-white/90 px-8 h-12">
-                ابدأ تجربتك المجانية لمدة 14 يوم
-                <ArrowLeft className="w-5 h-5 mr-2" />
-              </Button>
+              <Link href="/auth/register">
+                <Button size="lg" className="bg-white text-emerald hover:bg-white/90 px-8 h-12">
+                  ابدأ تجربتك المجانية لمدة 14 يوم
+                  <ArrowLeft className="w-5 h-5 mr-2" />
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
