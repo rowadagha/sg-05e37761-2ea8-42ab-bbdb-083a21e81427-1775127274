@@ -19,11 +19,16 @@ export interface OrderStats {
 
 class OrderService {
   async createOrder(restaurantId: string, items: Omit<OrderItemInsert, "order_id">[], customerNote?: string): Promise<Order> {
+    const orderNumber = `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
+    const totalAmount = items.reduce((sum, item) => sum + (Number(item.price) * (item.quantity || 1)), 0);
+
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
         restaurant_id: restaurantId,
-        customer_note: customerNote,
+        order_number: orderNumber,
+        notes: customerNote,
+        total_amount: totalAmount,
         status: "pending"
       })
       .select()
