@@ -303,7 +303,7 @@ export default function PublicMenu() {
                       {categoryItems.map((item) => (
                         <div key={item.id} className={theme.styles.cardStyle}>
                           {item.image_url && (
-                            <div className="aspect-video relative">
+                            <div className="aspect-video relative overflow-hidden">
                               <img 
                                 src={item.image_url} 
                                 alt={language === "ar" ? item.name : item.name_en || item.name}
@@ -316,8 +316,14 @@ export default function PublicMenu() {
                               {language === "ar" ? item.name : item.name_en || item.name}
                             </h3>
                             {(language === "ar" ? item.description : item.description_en) && (
-                              <p className="text-sm mb-3" style={{ color: theme.colors.textSecondary }}>
+                              <p className="text-sm mb-2" style={{ color: theme.colors.textSecondary }}>
                                 {language === "ar" ? item.description : item.description_en}
+                              </p>
+                            )}
+                            {item.calories && (
+                              <p className="text-xs mb-3 flex items-center gap-1" style={{ color: theme.colors.textSecondary }}>
+                                <span>🔥</span>
+                                <span>{item.calories} {language === "ar" ? "سعرة حرارية" : "calories"}</span>
                               </p>
                             )}
                             <div className="flex items-center justify-between">
@@ -346,7 +352,7 @@ export default function PublicMenu() {
                       {uncategorizedItems.map((item) => (
                         <div key={item.id} className={theme.styles.cardStyle}>
                           {item.image_url && (
-                            <div className="aspect-video relative">
+                            <div className="aspect-video relative overflow-hidden">
                               <img 
                                 src={item.image_url} 
                                 alt={language === "ar" ? item.name : item.name_en || item.name}
@@ -359,8 +365,14 @@ export default function PublicMenu() {
                               {language === "ar" ? item.name : item.name_en || item.name}
                             </h3>
                             {(language === "ar" ? item.description : item.description_en) && (
-                              <p className="text-sm mb-3" style={{ color: theme.colors.textSecondary }}>
+                              <p className="text-sm mb-2" style={{ color: theme.colors.textSecondary }}>
                                 {language === "ar" ? item.description : item.description_en}
+                              </p>
+                            )}
+                            {item.calories && (
+                              <p className="text-xs mb-3 flex items-center gap-1" style={{ color: theme.colors.textSecondary }}>
+                                <span>🔥</span>
+                                <span>{item.calories} {language === "ar" ? "سعرة حرارية" : "calories"}</span>
                               </p>
                             )}
                             <div className="flex items-center justify-between">

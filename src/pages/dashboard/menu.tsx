@@ -62,6 +62,7 @@ export default function MenuManagement() {
     description: "",
     description_en: "",
     price: "",
+    calories: "",
     image_url: "",
     category_id: "",
     is_available: true
@@ -158,6 +159,7 @@ export default function MenuManagement() {
         ...itemForm,
         restaurant_id: restaurant.id,
         price: parseFloat(itemForm.price),
+        calories: itemForm.calories ? parseInt(itemForm.calories) : null,
         category_id: itemForm.category_id || null,
         image_url: imageUrl
       };
@@ -222,6 +224,7 @@ export default function MenuManagement() {
       description: "",
       description_en: "",
       price: "",
+      calories: "",
       image_url: "",
       category_id: "",
       is_available: true
@@ -249,6 +252,7 @@ export default function MenuManagement() {
       description: item.description || "",
       description_en: item.description_en || "",
       price: item.price.toString(),
+      calories: item.calories ? item.calories.toString() : "",
       image_url: item.image_url || "",
       category_id: item.category_id || "",
       is_available: item.is_available
@@ -547,23 +551,34 @@ export default function MenuManagement() {
                           />
                         </div>
                         <div>
-                          <Label>الفئة</Label>
-                          <Select 
-                            value={itemForm.category_id} 
-                            onValueChange={(value) => setItemForm({ ...itemForm, category_id: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="اختر الفئة" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {categories.map((category) => (
-                                <SelectItem key={category.id} value={category.id}>
-                                  {category.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Label>السعرات الحرارية (Calories)</Label>
+                          <Input
+                            type="number"
+                            value={itemForm.calories}
+                            onChange={(e) => setItemForm({ ...itemForm, calories: e.target.value })}
+                            placeholder="350"
+                            dir="ltr"
+                          />
                         </div>
+                      </div>
+
+                      <div>
+                        <Label>الفئة</Label>
+                        <Select 
+                          value={itemForm.category_id} 
+                          onValueChange={(value) => setItemForm({ ...itemForm, category_id: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="اختر الفئة" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div>

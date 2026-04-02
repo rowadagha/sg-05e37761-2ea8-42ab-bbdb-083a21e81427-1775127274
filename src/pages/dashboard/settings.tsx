@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { SEO } from "@/components/SEO";
 import { authService } from "@/services/authService";
 import { restaurantService } from "@/services/restaurantService";
+import { storageService } from "@/services/storageService";
 import type { Database } from "@/integrations/supabase/types";
-import { QrCode, ArrowLeft, Save } from "lucide-react";
+import { QrCode, ArrowLeft, Save, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 
@@ -21,6 +22,8 @@ export default function Settings() {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string>("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -52,11 +55,69 @@ export default function Settings() {
         slug: restaurantData.slug,
         logo_url: restaurantData.logo_url || ""
       });
+      setLogoPreview(restaurantData.logo_url || "");
     } catch (error) {
       console.error("Error loading settings:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !restaurant) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "خطأ",
+        description: "يرجى اختيار صورة",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "خطأ",
+        description: "حجم الصورة يجب أن يكون أقل من 5 ميجابايت",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setUploadingLogo(true);
+
+    try {
+      const uploadedUrl = await storageService.uploadLogo(restaurant.id, file);
+      
+      if (uploadedUrl) {
+        if (formData.logo_url) {
+          await storageService.deleteLogo(formData.logo_url);
+        }
+        
+        setFormData({ ...formData, logo_url: uploadedUrl });
+        setLogoPreview(uploadedUrl);
+        
+        toast({
+          title: "تم الرفع بنجاح",
+          description: "تم رفع الشعار. لا تنسى حفظ التغييرات.",
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading logo:", error);
+      toast({
+        title: "خطأ",
+        description: "حدث خطأ أثناء رفع الشعار",
+        variant: "destructive"
+      });
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoPreview("");
+    setFormData({ ...formData, logo_url: "" });
   };
 
   const handleSave = async () => {
@@ -102,7 +163,6 @@ export default function Settings() {
       <SEO title={`الإعدادات - ${restaurant?.name || "منيو بلس"}`} />
       
       <div className="min-h-screen bg-gradient-to-b from-cream to-white">
-        {/* Header */}
         <header className="border-b border-border/50 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between h-16">
@@ -125,7 +185,6 @@ export default function Settings() {
           </div>
         </header>
 
-        {/* Main Content */}
         <main className="container mx-auto px-4 py-8 max-w-3xl">
           <Card className="p-6">
             <h2 className="text-xl font-bold text-foreground mb-6">إعدادات المطعم</h2>
@@ -159,20 +218,39 @@ export default function Settings() {
               </div>
 
               <div>
-                <Label htmlFor="logo">رابط الشعار (Logo URL)</Label>
-                <Input
-                  id="logo"
-                  value={formData.logo_url}
-                  onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                  placeholder="https://example.com/logo.png"
-                  className="mt-2 text-left"
-                  dir="ltr"
-                />
-                {formData.logo_url && (
-                  <div className="mt-4 p-4 border border-border rounded-lg bg-secondary/50 inline-block">
-                    <img src={formData.logo_url} alt="Logo Preview" className="h-16 object-contain" />
-                  </div>
-                )}
+                <Label>شعار المطعم (Logo)</Label>
+                <div className="space-y-3 mt-2">
+                  {logoPreview ? (
+                    <div className="relative p-4 border border-border rounded-lg bg-secondary/50 inline-block">
+                      <img src={logoPreview} alt="Logo Preview" className="h-24 object-contain" />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="destructive"
+                        className="absolute -top-2 -right-2"
+                        onClick={handleRemoveLogo}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center p-8 bg-secondary rounded-lg border-2 border-dashed border-border hover:border-emerald cursor-pointer transition-colors">
+                      <Upload className="w-8 h-8 text-foreground/40 mb-2" />
+                      <span className="text-sm text-foreground/60 mb-1">اضغط لاختيار الشعار</span>
+                      <span className="text-xs text-foreground/40">PNG, JPG, SVG (حد أقصى 5 ميجابايت)</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoSelect}
+                        className="hidden"
+                        disabled={uploadingLogo}
+                      />
+                    </label>
+                  )}
+                  {uploadingLogo && (
+                    <p className="text-sm text-emerald">جاري رفع الشعار...</p>
+                  )}
+                </div>
               </div>
 
               <div className="pt-4 border-t border-border">
