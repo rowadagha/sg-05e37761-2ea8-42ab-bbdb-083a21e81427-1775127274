@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { qrCodeService } from "@/services/qrCodeService";
 import { menuService } from "@/services/menuService";
 import { bannerService } from "@/services/bannerService";
+import { menuThemes } from "@/lib/menuThemes";
 import {
   Carousel,
   CarouselContent,
@@ -36,6 +37,8 @@ export default function PublicMenu() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+  const theme = restaurant?.theme ? menuThemes[restaurant.theme] || menuThemes.classic : menuThemes.classic;
+
   useEffect(() => {
     if (code) {
       loadMenu(code as string);
@@ -44,7 +47,6 @@ export default function PublicMenu() {
 
   const loadMenu = async (qrCode: string) => {
     try {
-      // Get restaurant from QR code
       const { data: qrData } = await supabase
         .from("qr_codes")
         .select("restaurant_id")
@@ -56,7 +58,6 @@ export default function PublicMenu() {
 
       await qrCodeService.trackView(qrCode, qrData.restaurant_id);
 
-      // Get restaurant details
       const { data: restaurantData } = await supabase
         .from("restaurants")
         .select("*")
@@ -67,7 +68,6 @@ export default function PublicMenu() {
       if (restaurantData) {
         setRestaurant(restaurantData);
         
-        // Load menu
         const categoriesData = await menuService.getCategories(restaurantData.id);
         const itemsData = await menuService.getMenuItems(restaurantData.id);
         const bannersData = await bannerService.getActiveBanners(restaurantData.id);
@@ -104,10 +104,10 @@ export default function PublicMenu() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-cream to-white">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: theme.colors.background }}>
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-emerald border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-foreground/60">جاري تحميل القائمة...</p>
+          <div className="w-16 h-16 border-4 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{ borderColor: theme.colors.primary, borderTopColor: 'transparent' }}></div>
+          <p style={{ color: theme.colors.textSecondary }}>جاري تحميل القائمة...</p>
         </div>
       </div>
     );
@@ -115,10 +115,10 @@ export default function PublicMenu() {
 
   if (!restaurant) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-cream to-white p-4">
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: theme.colors.background }}>
         <Card className="p-8 text-center max-w-md">
-          <h1 className="text-2xl font-bold text-emerald mb-2">القائمة غير موجودة</h1>
-          <p className="text-foreground/70">تأكد من صحة رمز QR أو تواصل مع المطعم</p>
+          <h1 className="text-2xl font-bold mb-2" style={{ color: theme.colors.primary }}>القائمة غير موجودة</h1>
+          <p style={{ color: theme.colors.textSecondary }}>تأكد من صحة رمز QR أو تواصل مع المطعم</p>
         </Card>
       </div>
     );
@@ -131,86 +131,88 @@ export default function PublicMenu() {
         description={language === "ar" ? `قائمة ${restaurant.name} الرقمية` : `${restaurant.name} Digital Menu`}
       />
       
-      <div className="min-h-screen bg-gradient-to-b from-cream to-white" dir={language === "ar" ? "rtl" : "ltr"}>
-        {/* Header */}
-        <header className="bg-white border-b border-border/50 sticky top-0 z-50 backdrop-blur-sm bg-white/90">
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=${theme.fonts.heading.replace(/ /g, '+')}:wght@400;600;700&family=${theme.fonts.body.replace(/ /g, '+')}:wght@400;500;600&display=swap');
+        
+        .menu-heading {
+          font-family: '${theme.fonts.heading}', serif;
+        }
+        
+        .menu-body {
+          font-family: '${theme.fonts.body}', sans-serif;
+        }
+      `}</style>
+
+      <div className="min-h-screen menu-body" style={{ background: theme.colors.background }} dir={language === "ar" ? "rtl" : "ltr"}>
+        <header className={`sticky top-0 z-50 ${theme.styles.headerStyle}`}>
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between mb-4">
               <div>
                 {restaurant.logo_url ? (
                   <img src={restaurant.logo_url} alt={restaurant.name} className="h-12" />
                 ) : (
-                  <h1 className="text-2xl font-bold text-emerald">{restaurant.name}</h1>
+                  <h1 className="text-2xl font-bold menu-heading" style={{ color: theme.colors.primary }}>{restaurant.name}</h1>
                 )}
               </div>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => setLanguage(language === "ar" ? "en" : "ar")}
+                className={theme.styles.buttonStyle}
               >
                 <Globe className="w-4 h-4 ml-2" />
                 {language === "ar" ? "English" : "العربية"}
               </Button>
             </div>
 
-            {/* Search */}
             <div className="relative">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/40" />
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: theme.colors.textSecondary }} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={language === "ar" ? "ابحث في القائمة..." : "Search menu..."}
-                className="w-full pr-10 pl-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald"
+                className={`w-full pr-10 pl-4 py-2 ${theme.styles.searchStyle}`}
+                style={{ color: theme.colors.text }}
               />
             </div>
           </div>
         </header>
 
-        {/* Categories Filter */}
         {categories.length > 0 && (
-          <div className="bg-white border-b border-border/50 sticky top-[120px] z-40">
+          <div className={`sticky top-[120px] z-40 ${theme.styles.headerStyle}`}>
             <div className="container mx-auto px-4 py-3">
               <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-                <Button
-                  size="sm"
-                  variant={!selectedCategory ? "default" : "outline"}
+                <button
                   onClick={() => setSelectedCategory(null)}
-                  className={!selectedCategory ? "bg-emerald hover:bg-emerald-dark" : ""}
+                  className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${theme.styles.buttonStyle}`}
+                  style={!selectedCategory ? {} : { background: theme.colors.cardBg, color: theme.colors.text, border: `1px solid ${theme.colors.border}` }}
                 >
                   {language === "ar" ? "الكل" : "All"}
-                </Button>
+                </button>
                 {categories.map((category) => (
-                  <Button
+                  <button
                     key={category.id}
-                    size="sm"
-                    variant={selectedCategory === category.id ? "default" : "outline"}
                     onClick={() => setSelectedCategory(category.id)}
-                    className={selectedCategory === category.id ? "bg-emerald hover:bg-emerald-dark" : ""}
+                    className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${theme.styles.buttonStyle}`}
+                    style={selectedCategory === category.id ? {} : { background: theme.colors.cardBg, color: theme.colors.text, border: `1px solid ${theme.colors.border}` }}
                   >
                     {language === "ar" ? category.name : category.name_en || category.name}
-                  </Button>
+                  </button>
                 ))}
               </div>
             </div>
           </div>
         )}
 
-        {/* Menu Content */}
         <main className="container mx-auto px-4 py-6">
-          {/* Promotional Banners Carousel */}
           {banners.length > 0 && (
             <div className="mb-8">
               <Carousel
-                opts={{
-                  align: "start",
-                  loop: true,
-                }}
+                opts={{ align: "start", loop: true }}
                 plugins={[
                   // @ts-expect-error - Embla carousel types mismatch
-                  Autoplay({
-                    delay: 5000,
-                  }),
+                  Autoplay({ delay: 5000 }),
                 ]}
                 className="w-full"
               >
@@ -227,7 +229,7 @@ export default function PublicMenu() {
                             />
                             {(banner.title || banner.description) && (
                               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-                                <h3 className="text-2xl font-bold text-white mb-2">
+                                <h3 className="text-2xl font-bold text-white mb-2 menu-heading">
                                   {language === "ar" ? banner.title : banner.title_en || banner.title}
                                 </h3>
                                 {(language === "ar" ? banner.description : banner.description_en) && (
@@ -247,7 +249,7 @@ export default function PublicMenu() {
                             />
                             {(banner.title || banner.description) && (
                               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
-                                <h3 className="text-2xl font-bold text-white mb-2">
+                                <h3 className="text-2xl font-bold text-white mb-2 menu-heading">
                                   {language === "ar" ? banner.title : banner.title_en || banner.title}
                                 </h3>
                                 {(language === "ar" ? banner.description : banner.description_en) && (
@@ -274,8 +276,8 @@ export default function PublicMenu() {
           )}
 
           {filteredItems.length === 0 ? (
-            <Card className="p-12 text-center">
-              <p className="text-foreground/60">
+            <Card className="p-12 text-center" style={{ background: theme.colors.cardBg }}>
+              <p style={{ color: theme.colors.textSecondary }}>
                 {language === "ar" 
                   ? "لا توجد أصناف مطابقة للبحث" 
                   : "No items match your search"}
@@ -289,19 +291,19 @@ export default function PublicMenu() {
 
                 return (
                   <div key={category.id}>
-                    <h2 className="text-2xl font-bold text-foreground mb-4">
+                    <h2 className="text-2xl font-bold mb-4 menu-heading" style={{ color: theme.colors.text }}>
                       {language === "ar" ? category.name : category.name_en || category.name}
                     </h2>
                     {(language === "ar" ? category.description : category.description_en) && (
-                      <p className="text-foreground/70 mb-4">
+                      <p className="mb-4" style={{ color: theme.colors.textSecondary }}>
                         {language === "ar" ? category.description : category.description_en}
                       </p>
                     )}
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {categoryItems.map((item) => (
-                        <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                        <div key={item.id} className={theme.styles.cardStyle}>
                           {item.image_url && (
-                            <div className="aspect-video bg-secondary relative">
+                            <div className="aspect-video relative">
                               <img 
                                 src={item.image_url} 
                                 alt={language === "ar" ? item.name : item.name_en || item.name}
@@ -310,42 +312,41 @@ export default function PublicMenu() {
                             </div>
                           )}
                           <div className="p-4">
-                            <h3 className="text-lg font-bold text-foreground mb-1">
+                            <h3 className="text-lg font-bold mb-1 menu-heading" style={{ color: theme.colors.text }}>
                               {language === "ar" ? item.name : item.name_en || item.name}
                             </h3>
                             {(language === "ar" ? item.description : item.description_en) && (
-                              <p className="text-sm text-foreground/70 mb-3">
+                              <p className="text-sm mb-3" style={{ color: theme.colors.textSecondary }}>
                                 {language === "ar" ? item.description : item.description_en}
                               </p>
                             )}
                             <div className="flex items-center justify-between">
-                              <span className="text-xl font-bold text-emerald">
+                              <span className={theme.styles.priceStyle}>
                                 {item.price} {language === "ar" ? "ر.س" : "SAR"}
                               </span>
                             </div>
                           </div>
-                        </Card>
+                        </div>
                       ))}
                     </div>
                   </div>
                 );
               })}
 
-              {/* Uncategorized items */}
               {(() => {
                 const uncategorizedItems = filteredItems.filter(item => !item.category_id);
                 if (uncategorizedItems.length === 0) return null;
 
                 return (
                   <div>
-                    <h2 className="text-2xl font-bold text-foreground mb-4">
+                    <h2 className="text-2xl font-bold mb-4 menu-heading" style={{ color: theme.colors.text }}>
                       {language === "ar" ? "أصناف أخرى" : "Other Items"}
                     </h2>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {uncategorizedItems.map((item) => (
-                        <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                        <div key={item.id} className={theme.styles.cardStyle}>
                           {item.image_url && (
-                            <div className="aspect-video bg-secondary relative">
+                            <div className="aspect-video relative">
                               <img 
                                 src={item.image_url} 
                                 alt={language === "ar" ? item.name : item.name_en || item.name}
@@ -354,21 +355,21 @@ export default function PublicMenu() {
                             </div>
                           )}
                           <div className="p-4">
-                            <h3 className="text-lg font-bold text-foreground mb-1">
+                            <h3 className="text-lg font-bold mb-1 menu-heading" style={{ color: theme.colors.text }}>
                               {language === "ar" ? item.name : item.name_en || item.name}
                             </h3>
                             {(language === "ar" ? item.description : item.description_en) && (
-                              <p className="text-sm text-foreground/70 mb-3">
+                              <p className="text-sm mb-3" style={{ color: theme.colors.textSecondary }}>
                                 {language === "ar" ? item.description : item.description_en}
                               </p>
                             )}
                             <div className="flex items-center justify-between">
-                              <span className="text-xl font-bold text-emerald">
+                              <span className={theme.styles.priceStyle}>
                                 {item.price} {language === "ar" ? "ر.س" : "SAR"}
                               </span>
                             </div>
                           </div>
-                        </Card>
+                        </div>
                       ))}
                     </div>
                   </div>
@@ -378,10 +379,9 @@ export default function PublicMenu() {
           )}
         </main>
 
-        {/* Footer */}
-        <footer className="border-t border-border mt-12 py-6 bg-white">
+        <footer className="border-t mt-12 py-6" style={{ borderColor: theme.colors.border, background: theme.colors.cardBg }}>
           <div className="container mx-auto px-4 text-center">
-            <p className="text-sm text-foreground/60">
+            <p className="text-sm" style={{ color: theme.colors.textSecondary }}>
               {language === "ar" 
                 ? "مدعوم بواسطة منيو بلس - حلول القوائم الرقمية" 
                 : "Powered by MenuPlus - Digital Menu Solutions"}

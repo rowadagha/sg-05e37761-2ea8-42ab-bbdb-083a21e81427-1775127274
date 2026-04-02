@@ -13,6 +13,7 @@ import { authService } from "@/services/authService";
 import { restaurantService } from "@/services/restaurantService";
 import { menuService } from "@/services/menuService";
 import { storageService } from "@/services/storageService";
+import { menuThemes, themeList } from "@/lib/menuThemes";
 import type { Database } from "@/integrations/supabase/types";
 import { 
   QrCode, 
@@ -20,11 +21,11 @@ import {
   Edit,
   Trash2,
   ArrowLeft,
-  GripVertical,
   Eye,
   EyeOff,
   Upload,
-  X
+  X,
+  Palette
 } from "lucide-react";
 import Link from "next/link";
 
@@ -41,10 +42,12 @@ export default function MenuManagement() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const [showItemDialog, setShowItemDialog] = useState(false);
+  const [showThemeDialog, setShowThemeDialog] = useState(false);
   const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(null);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [selectedTheme, setSelectedTheme] = useState<string>("classic");
 
   const [categoryForm, setCategoryForm] = useState({
     name: "",
@@ -71,6 +74,7 @@ export default function MenuManagement() {
   useEffect(() => {
     if (restaurant) {
       loadItems();
+      setSelectedTheme(restaurant.theme || "classic");
     }
   }, [restaurant, selectedCategory]);
 
@@ -176,6 +180,19 @@ export default function MenuManagement() {
     }
   };
 
+  const handleThemeChange = async (themeId: string) => {
+    if (!restaurant) return;
+    
+    try {
+      await restaurantService.updateTheme(restaurant.id, themeId);
+      setSelectedTheme(themeId);
+      setRestaurant({ ...restaurant, theme: themeId });
+      setShowThemeDialog(false);
+    } catch (error) {
+      console.error("Error updating theme:", error);
+    }
+  };
+
   const handleDeleteCategory = async (id: string) => {
     if (!confirm("هل أنت متأكد من حذف هذه الفئة؟ سيتم حذف جميع الأصناف المرتبطة بها.")) return;
     await menuService.deleteCategory(id);
@@ -272,12 +289,13 @@ export default function MenuManagement() {
     );
   }
 
+  const currentTheme = menuThemes[selectedTheme] || menuThemes.classic;
+
   return (
     <ProtectedRoute>
       <SEO title={`إدارة القائمة - ${restaurant?.name || "منيو بلس"}`} />
       
       <div className="min-h-screen bg-gradient-to-b from-cream to-white">
-        {/* Header */}
         <header className="border-b border-border/50 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between h-16">
@@ -299,14 +317,66 @@ export default function MenuManagement() {
                   </div>
                 </div>
               </div>
+              
+              <Dialog open={showThemeDialog} onOpenChange={setShowThemeDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Palette className="w-4 h-4" />
+                    تغيير المظهر
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>اختر مظهر القائمة</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {themeList.map((theme) => (
+                      <button
+                        key={theme.id}
+                        onClick={() => handleThemeChange(theme.id)}
+                        className={`relative p-6 rounded-xl border-2 transition-all ${
+                          selectedTheme === theme.id 
+                            ? "border-emerald ring-2 ring-emerald/20" 
+                            : "border-border hover:border-emerald/50"
+                        }`}
+                        style={{ background: theme.colors.background }}
+                      >
+                        <div className="text-center mb-4">
+                          <div className="text-4xl mb-2">{theme.preview}</div>
+                          <h3 className="font-bold text-lg" style={{ color: theme.colors.text }}>
+                            {theme.nameAr}
+                          </h3>
+                          <p className="text-sm" style={{ color: theme.colors.textSecondary }}>
+                            {theme.name}
+                          </p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className={theme.styles.cardStyle} style={{ padding: "0.75rem" }}>
+                            <div className="font-semibold mb-1" style={{ color: theme.colors.text }}>عنوان الصنف</div>
+                            <div className="text-sm mb-2" style={{ color: theme.colors.textSecondary }}>وصف قصير للصنف</div>
+                            <div className={theme.styles.priceStyle}>45 ر.س</div>
+                          </div>
+                        </div>
+                        
+                        {selectedTheme === theme.id && (
+                          <div className="absolute top-2 right-2 w-6 h-6 bg-emerald rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </header>
 
-        {/* Main Content */}
         <main className="container mx-auto px-4 py-8">
           <div className="grid md:grid-cols-12 gap-6">
-            {/* Categories Sidebar */}
             <div className="md:col-span-3">
               <Card className="p-4">
                 <div className="flex items-center justify-between mb-4">
@@ -421,7 +491,6 @@ export default function MenuManagement() {
               </Card>
             </div>
 
-            {/* Menu Items */}
             <div className="md:col-span-9">
               <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold text-foreground">

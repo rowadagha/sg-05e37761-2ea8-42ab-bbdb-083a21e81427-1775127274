@@ -91,6 +91,10 @@ export const restaurantService = {
     }
 
     return slug;
+  },
+
+  async updateTheme(id: string, theme: string): Promise<Restaurant | null> {
+    return this.updateRestaurant(id, { theme });
   }
 };
 
