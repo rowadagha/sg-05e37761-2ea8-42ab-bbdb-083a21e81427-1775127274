@@ -7,12 +7,22 @@ import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { qrCodeService } from "@/services/qrCodeService";
 import { menuService } from "@/services/menuService";
+import { bannerService } from "@/services/bannerService";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 import type { Database } from "@/integrations/supabase/types";
 import { Search, Globe } from "lucide-react";
 
 type Restaurant = Database["public"]["Tables"]["restaurants"]["Row"];
 type MenuCategory = Database["public"]["Tables"]["menu_categories"]["Row"];
 type MenuItem = Database["public"]["Tables"]["menu_items"]["Row"];
+type Banner = Database["public"]["Tables"]["promotional_banners"]["Row"];
 
 export default function PublicMenu() {
   const router = useRouter();
@@ -20,6 +30,7 @@ export default function PublicMenu() {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState<"ar" | "en">("ar");
   const [searchQuery, setSearchQuery] = useState("");
@@ -41,7 +52,9 @@ export default function PublicMenu() {
         .eq("is_active", true)
         .single();
 
-      if (!qrData) { setLoading(false); return; } await qrCodeService.trackView(qrCode, qrData.restaurant_id);
+      if (!qrData) { setLoading(false); return; }
+
+      await qrCodeService.trackView(qrCode, qrData.restaurant_id);
 
       // Get restaurant details
       const { data: restaurantData } = await supabase
@@ -57,9 +70,11 @@ export default function PublicMenu() {
         // Load menu
         const categoriesData = await menuService.getCategories(restaurantData.id);
         const itemsData = await menuService.getMenuItems(restaurantData.id);
+        const bannersData = await bannerService.getActiveBanners(restaurantData.id);
         
         setCategories(categoriesData);
         setItems(itemsData.filter(item => item.is_available));
+        setBanners(bannersData);
       }
     } catch (error) {
       console.error("Error loading menu:", error);
@@ -183,6 +198,80 @@ export default function PublicMenu() {
 
         {/* Menu Content */}
         <main className="container mx-auto px-4 py-6">
+          {/* Promotional Banners Carousel */}
+          {banners.length > 0 && (
+            <div className="mb-8">
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                plugins={[
+                  Autoplay({
+                    delay: 5000,
+                  }),
+                ]}
+                className="w-full"
+              >
+                <CarouselContent>
+                  {banners.map((banner) => (
+                    <CarouselItem key={banner.id}>
+                      <div className="relative rounded-lg overflow-hidden shadow-lg">
+                        {banner.link_url ? (
+                          <a href={banner.link_url} target="_blank" rel="noopener noreferrer">
+                            <img
+                              src={banner.image_url || ""}
+                              alt={language === "ar" ? banner.title : banner.title_en || banner.title}
+                              className="w-full aspect-[3/1] object-cover"
+                            />
+                            {(banner.title || banner.description) && (
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                                <h3 className="text-2xl font-bold text-white mb-2">
+                                  {language === "ar" ? banner.title : banner.title_en || banner.title}
+                                </h3>
+                                {(language === "ar" ? banner.description : banner.description_en) && (
+                                  <p className="text-white/90">
+                                    {language === "ar" ? banner.description : banner.description_en}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </a>
+                        ) : (
+                          <>
+                            <img
+                              src={banner.image_url || ""}
+                              alt={language === "ar" ? banner.title : banner.title_en || banner.title}
+                              className="w-full aspect-[3/1] object-cover"
+                            />
+                            {(banner.title || banner.description) && (
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                                <h3 className="text-2xl font-bold text-white mb-2">
+                                  {language === "ar" ? banner.title : banner.title_en || banner.title}
+                                </h3>
+                                {(language === "ar" ? banner.description : banner.description_en) && (
+                                  <p className="text-white/90">
+                                    {language === "ar" ? banner.description : banner.description_en}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                {banners.length > 1 && (
+                  <>
+                    <CarouselPrevious className="left-2" />
+                    <CarouselNext className="right-2" />
+                  </>
+                )}
+              </Carousel>
+            </div>
+          )}
+
           {filteredItems.length === 0 ? (
             <Card className="p-12 text-center">
               <p className="text-foreground/60">
